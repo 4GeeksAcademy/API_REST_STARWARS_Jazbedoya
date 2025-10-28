@@ -1,51 +1,45 @@
-"""
-This module takes care of starting the API Server, Loading the DB and Adding the endpoints
-"""
-import os
-from flask import Flask, request, jsonify, url_for
-from flask_migrate import Migrate
-from flask_swagger import swagger
-from flask_cors import CORS
-from utils import APIException, generate_sitemap
-from admin import setup_admin
-from models import db, User
-#from models import Person
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
 
-app = Flask(__name__)
-app.url_map.strict_slashes = False
 
-db_url = os.getenv("DATABASE_URL")
-if db_url is not None:
-    app.config['SQLALCHEMY_DATABASE_URI'] = db_url.replace("postgres://", "postgresql://")
-else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:////tmp/test.db"
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+#Variables iniciales para poder crear nuestro servidor y nuestra base de datos
+app= Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////tmp/StarWars.db" #Aca definimos el nombre de la base de datos
+db = SQLAlchemy(app)
 
-MIGRATE = Migrate(app, db)
-db.init_app(app)
-CORS(app)
-setup_admin(app)
 
-# Handle/serialize errors like a JSON object
-@app.errorhandler(APIException)
-def handle_invalid_usage(error):
-    return jsonify(error.to_dict()), error.status_code
+# 1-Crear los modelos (tabla tradicional)
+class People(db.Model):
+    # Aquí definimos el nombre de la tabla "Person"
+    __tablename__ = "people" 
 
-# generate sitemap with all your endpoints
-@app.route('/')
-def sitemap():
-    return generate_sitemap(app)
+    # Ten en cuenta que cada columna es también un atributo normal de primera instancia de Python.
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(250), nullable=False)
 
-@app.route('/user', methods=['GET'])
-def handle_hello():
+    # El método serialize convierte el objeto en un diccionario
+    def serialize(self):
+        return {
+            "id": self.id,
+            "username": self.username,
+        }
+    
+#2-Crear los endpoint
+@app.route('/people') #Definimos la primera ruta de la API GET/
+def getPeople():
+    all_people = People.query.all()
+    all_people = list(map(lambda x: x.serialize(),all_people))
+    return jsonify (all_people, "estas en people")
 
-    response_body = {
-        "msg": "Hello, this is your GET /user response "
-    }
+@app.route('/people/<int:id>')
+def getPeoplebyId(id):
+    people = People.query.get(3)
+    return jsonify (people, "Estas en peoplebyID")
 
-    return jsonify(response_body), 200
 
-# this only runs if `$ python src/app.py` is executed
+#3 Iniciamos el servidor 
 if __name__ == '__main__':
-    PORT = int(os.environ.get('PORT', 3000))
-    app.run(host='0.0.0.0', port=PORT, debug=False)
+
+    with app.app_context():
+        db.create_all()  #aqui crea la base de datos
+    app.run(host = '0.0.0.0')
