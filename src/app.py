@@ -72,17 +72,46 @@ def getUserFavorites():
 #FAVORITOS-----------------
 @app.route('/favorites/people/<int:people_id>', methods = ['POST'])
 def addFavoritePeople(people_id):
+    user_id = 1
+    new_favorite = FavoritePeople(user_id=user_id, people_id=people_id )
+    db.session.add(new_favorite)
+    db.session.commit()
+    return jsonify({"msg": "Person add to Favorites"}), 201
+
+
+@app.route('/favorite/planet/<int:planet_id>', methods = ['POST'])
+def addFavoritePlanet(planet_id):
+    user_id = 1
+    new_favorite = FavoritePlanet( planet_id=planet_id, planet_id=planet_id)
+    db.session.add(new_favorite)
+    db.session.commit()
+    return jsonify({"msg": "Planet add to Favorites"}),201
+
+
+#ELIMINAR DE FAVORITOS
+@app.route('/favorite/people/<int:people_id', methods= ['DELETE'])
+def deleteFavoritePeople(people_id):
+    fav = FavoritePeople.query.filter_id( user_id= user_id, people_id = people_id).firts()
+    if not fav:
+        return jsonify({"msg":"favorite not found"}),404
+    db.session.delete(fav)
+    db.session.commit()
+    return jsonify({"msg": "Planet removed to favorite"}),200
+
+
+@app.route('/favorite/planet/<int:planet_id>' methods=['DELETE'])
+def deleteFavoritePlanet(planet_id):
+    fav = FavoritePlanet.query.filter_id( user_id = user_id , planet_id= planet_id).firts()
+    if not fav:
+        return jsonify({"msg": "Favorite not found"}), 404
+    db.sesssion.delete(fav)
+    db.session.commit()
+    return jsonify({",msg":"Planet removed from favorite"}), 200
+
+
+
+
     
-
-
-
-
-
-
-
-
-
-
 
 
 #3 Iniciamos el servidor 
@@ -90,12 +119,29 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
 
-        # Solo insertar si no hay datos todavía
-        if not People.query.first():
-            people1 = People(name="Luke Skywalker")
-            people2 = People(name="Darth Vader")
-            db.session.add_all([people1, people2])
-            db.session.commit()
+        # Datos iniciales
+        if not User.query.first():
+            user = User(email= "jazbedoya.com", password="1234", is_active = True)
+            db.session.add(user)
 
-    # Ahora sí se ejecuta el servidor
+
+
+        if not People.query.first():
+            db.session.add_all ([
+            People(name="Luke Skywalker"),
+            People(name="Darth Vader")
+            ])
+            
+
+        if not Planet.query.firts():
+            db.session.add_all([
+                Planet(name="Tatooine", climate="arid"),
+                Planet(name="Alderaan", climate="temperate")
+            ])
+    
+        db.session.commit()
+    
+    
+    
+    # se ejecuta el servidor
     app.run(host='0.0.0.0', port=5000, debug=True)
