@@ -4,16 +4,38 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 db = SQLAlchemy()
 
-class User(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
-    password: Mapped[str] = mapped_column(nullable=False)
-    is_active: Mapped[bool] = mapped_column(Boolean(), nullable=False)
+# 1-Crear los modelos (tabla tradicional)
+class People(db.Model):
+    
+    __tablename__ = "people" 
 
+    # Ten en cuenta que cada columna es también un atributo normal de primera instancia de Python.
+    id = db.Column(db.Integer, primary_key=True)
+    user = db.Column(db.String(250), nullable=True)
+    name = db.Column(db.String(120), nullable=False)
 
+    # El método serialize convierte el objeto en un diccionario
     def serialize(self):
         return {
             "id": self.id,
-            "email": self.email,
-            # do not serialize the password, its a security breach
+            "user": self.user,
+            "name": self.name
         }
+
+    
+class FavoritePeople(db.Model):
+    __tablename__ = "favoritesPeople" 
+
+    id_user = db.Column(db.Integer, primary_key=True)
+    id_people = db.Column(db.Integer,  primary_key=True)
+    
+
+    
+    def serialize(self):
+        return {
+            "id_user": self.id_user,
+            "id_people": self.id_people,
+        }
+    
+
+
