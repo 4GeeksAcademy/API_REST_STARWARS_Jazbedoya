@@ -30,30 +30,30 @@ def getPeoplebyId(id):
 
 
 # Planet
-@app.route('/planet', methods=['GET'])  # Ruta para planeta
+@app.route('/planets', methods=['GET'])  # Ruta para planeta
 def getPlanet():
     all_planet = Planet.query.all()
     all_planet = list(map(lambda x: x.serialize(), all_planet))
     return jsonify(all_planet, "Estas en planeta!")
 
 
-@app.route('/planet/<int:id>', methods=['GET'])
+@app.route('/planets/<int:id>', methods=['GET'])
 def getPlanetById(id):
-    planet = Planet.query.all(id)
+    planet = Planet.query.get(id)
     if not planet:
         return jsonify({"error": "Planet not found"}), 404
-    return jsonify(planet.serialize(), "Estas en planetById")
+    return jsonify(planet.serialize()), 200
 
 
 # User
-@app.route('/user', methods=['GET'])
+@app.route('/users', methods=['GET'])
 def getUser():
     all_user = User.query.all()
     all_user = list(map(lambda x: x.serialize(), all_user))
     return jsonify(all_user, "Estas en User!")
 
 
-@app.route('/user/favorite', methods=['GET'])
+@app.route('/users/favorites', methods=['GET'])
 def getUserFavorites():
     # Usamos un usuario fijo (id=1)
     user_id = 1
@@ -68,7 +68,7 @@ def getUserFavorites():
 
 
 # FAVORITOS-----------------
-@app.route('/favorite/people/<int:people_id>', methods=[ 'POST'])
+@app.route('/favorite/people/<int:people_id>', methods=['POST'])
 def addFavoritePeople(people_id):
     user_id = 1
     new_favorite = FavoritePeople(user_id=user_id, people_id=people_id)
@@ -89,23 +89,27 @@ def addFavoritePlanet(planet_id):
 # ELIMINAR DE FAVORITOS
 @app.route('/favorite/people/<int:people_id>', methods=['DELETE'])
 def deleteFavoritePeople(people_id):
-    fav = FavoritePeople.query.filter_id(user_id=user_id, people_id=people_id).firts()
+    user_id = 1
+    fav = FavoritePeople.query.filter_by(
+        user_id=user_id, people_id=people_id).first()
+
     if not fav:
         return jsonify({"msg": "favorite not found"}), 404
     db.session.delete(fav)
     db.session.commit()
-    return jsonify({"msg": "Planet removed to favorite"}), 200
+    return jsonify({"msg": "Person removed to favorite"}), 200
 
 
 @app.route('/favorite/planet/<int:planet_id>', methods=['DELETE'])
 def deleteFavoritePlanet(planet_id):
-    fav = FavoritePlanet.query.filter_id(
-        user_id=user_id, planet_id=planet_id).firts()
+    user_id = 1
+    fav = FavoritePlanet.query.filter_by(
+        user_id=user_id, planet_id=planet_id).first()
     if not fav:
         return jsonify({"msg": "Favorite not found"}), 404
-    db.sesssion.delete(fav)
+    db.session.delete(fav)
     db.session.commit()
-    return jsonify({",msg": "Planet removed from favorite"}), 200
+    return jsonify({"msg": "Planet removed from favorite"}), 200
 
 
 # 3 Iniciamos el servidor
