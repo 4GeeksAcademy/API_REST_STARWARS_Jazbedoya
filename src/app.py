@@ -18,7 +18,26 @@ db.init_app(app)
 def getPeople():
     all_people = People.query.all()
     all_people = list(map(lambda x: x.serialize(), all_people))
-    return jsonify(all_people, "estas en people")
+
+    return jsonify({
+        "message": "Lista de personajes",
+        "results": all_people,
+        "total": len(all_people)
+    }), 200
+
+
+@app.route('/people', methods=['POST'])
+def createPeople():
+    data = request.get_json()
+
+    if not data or "name" not in data:
+        return jsonify({"msg": "Name is required"}), 400
+
+    new_person = People(name=data["name"])
+    db.session.add(new_person)
+    db.session.commit()
+
+    return jsonify(new_person.serialize()), 201
 
 
 @app.route('/people/<int:id>', methods=['GET'])
